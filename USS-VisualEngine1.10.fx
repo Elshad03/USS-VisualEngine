@@ -1,7 +1,6 @@
 #include "ReShade.fxh"
 
 
-
 // ============================================================================
 // USS-VisualEngine1.12 - Unified Color, Bloom and Screen-Space Reflection Engine
 // Automatic HUD guard, precision bloom, depth-aware AO and temporal subpixel reconstruction
