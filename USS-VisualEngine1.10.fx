@@ -3,10 +3,31 @@
 
 
 // ============================================================================
-// USS-VisualEngine1.10 - Unified Color, Bloom and Screen-Space Reflection Engine
+// USS-VisualEngine1.12 - Unified Color, Bloom and Screen-Space Reflection Engine
 // Automatic HUD guard, precision bloom, depth-aware AO and temporal subpixel reconstruction
 // ReShade 6.x / D3D11-D3D12 intended.
 //
+// ============================================================================
+// CREDITS
+//
+// Project Author & Maintainer: Elshad03
+// AI Development Assistant: ChatGPT (OpenAI)
+//
+// Contributions:
+// - Shader architecture and algorithm development
+// - HLSL code drafting and technical analysis
+// - Debugging and optimization assistance
+// - Documentation and release preparation
+// ============================================================================
+// ACES RRT/ODT fit adapted from:
+// https://github.com/selfshadow/ltc_code/blob/master/webgl/shaders/ltc/ltc_blit.fs
+// Copyright (c) 2017, Eric Heitz, Jonathan Dupuy, Stephen Hill and David Neubelt.
+// See THIRD-PARTY-NOTICES.md for attribution and license terms.
+// Color vision simulation matrices based on:
+// Gustavo M. Machado, Manuel M. Oliveira, and Leandro A. F. Fernandes,
+// "A Physiologically-based Model for Simulation of Color Vision Deficiency,"
+// IEEE Transactions on Visualization and Computer Graphics, 15(6), 2009.
+// DOI: 10.1109/TVCG.2009.113
 // Notes:
 // - Texture/material-only sharpening is intentionally not added: a ReShade
 //   post-process sees the composited backbuffer, not material texture inputs.
