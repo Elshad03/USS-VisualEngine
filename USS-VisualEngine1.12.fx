@@ -13,6 +13,7 @@
 // Project Author & Maintainer: Elshad03
 // AI Development Assistant: ChatGPT (OpenAI)
 //
+// ============================================================================
 // Contributions:
 // - Shader architecture and algorithm development
 // - HLSL code drafting and technical analysis
