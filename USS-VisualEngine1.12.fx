@@ -1,18 +1,13 @@
 #include "ReShade.fxh"
 
-
-
 // ============================================================================
-// USS-VisualEngine1.12 - Unified Color, Bloom and Screen-Space Reflection Engine
+// USS-VisualEngine - Unified Color, Bloom and Screen-Space Reflection Engine
 // Automatic HUD guard, precision bloom, depth-aware AO and temporal subpixel reconstruction
 // ReShade 6.x / D3D11-D3D12 intended.
-//
 // ============================================================================
 // CREDITS
-//
 // Project Author & Maintainer: Elshad03
 // AI Development Assistant: ChatGPT (OpenAI)
-//
 // ============================================================================
 // Contributions:
 // - Shader architecture and algorithm development
@@ -49,8 +44,6 @@
 // ============================================================================
 
 // ------------------------------ UI ------------------------------------------
-
-
 
 uniform bool EnableLocalContrast <
     ui_label = "Enable Local Contrast";
@@ -89,13 +82,13 @@ uniform bool EnableDetailReconstruction <
 uniform float DetailAmount <
     ui_type = "slider";
     ui_label = "Detail Reconstruction Strength";
-    ui_min = 0.0; ui_max = 3.0; ui_step = 0.05;
+    ui_min = 0.0; ui_max = 5.0; ui_step = 0.05;
 > = 1.00;
 
 uniform float DetailRadius <
     ui_type = "slider";
     ui_label = "Detail Radius";
-    ui_min = 0.5; ui_max = 2.5; ui_step = 0.1;
+    ui_min = 0.5; ui_max = 5.5; ui_step = 0.1;
 > = 1.00;
 
 uniform float NoiseThreshold <
@@ -107,13 +100,13 @@ uniform float NoiseThreshold <
 uniform float EdgeProtection <
     ui_type = "slider";
     ui_label = "Edge Protection";
-    ui_min = 0.0; ui_max = 1.0; ui_step = 0.01;
+    ui_min = 0.0; ui_max = 2.0; ui_step = 0.01;
 > = 0.200;
 
 uniform float DetailLimit <
     ui_type = "slider";
     ui_label = "Detail Overshoot Limit";
-    ui_min = 0.01; ui_max = 0.50; ui_step = 0.005;
+    ui_min = 0.01; ui_max = 1.50; ui_step = 0.005;
 > = 0.45;
 
 uniform float HDRBloomThreshold <
@@ -187,14 +180,14 @@ uniform bool EnableAO <
 uniform float AOIntensity <
     ui_type = "slider";
     ui_label = "AO Intensity";
-    ui_min = 0.0; ui_max = 3.0; ui_step = 0.05;
+    ui_min = 0.0; ui_max = 15.0; ui_step = 0.05;
 > = 3.00;
 
 uniform float AORadius <
     ui_type = "slider";
     ui_label = "AO Radius";
-    ui_min = 0.5; ui_max = 555.0; ui_step = 0.1;
-> = 155.00;
+    ui_min = 0.5; ui_max = 1500.0; ui_step = 0.1;
+> = 150.00;
 
 uniform float AOTemporalWeight <
     ui_type = "slider";
@@ -211,7 +204,7 @@ uniform bool EnableAOTemporal <
 uniform float SaturationStrength <
     ui_type = "slider";
     ui_label = "Color Saturation";
-    ui_min = 0.0; ui_max = 2.0; ui_step = 0.01;
+    ui_min = 0.0; ui_max = 3.0; ui_step = 0.01;
 > = 1.25;
 
 uniform bool EnableVignette <
@@ -244,7 +237,7 @@ uniform bool EnableFilmGrain <
 uniform float FilmGrainAmount <
     ui_type = "slider";
     ui_label = "Film Grain Amount";
-    ui_min = 0.0; ui_max = 0.10; ui_step = 0.001;
+    ui_min = 0.0; ui_max = 0.90; ui_step = 0.001;
 > = 0.025;
 
 uniform float FilmGrainSize <
@@ -264,14 +257,14 @@ uniform bool EnableColorEngine <
 uniform float ColorBrightness <
     ui_type = "slider";
     ui_label = "Brightness";
-    ui_min = -0.50; ui_max = 0.50; ui_step = 0.005;
+    ui_min = -0.50; ui_max = 1.50; ui_step = 0.005;
     ui_category = "Color Engine";
 > = 0.00;
 
 uniform float ColorContrast <
     ui_type = "slider";
     ui_label = "Contrast";
-    ui_min = 0.50; ui_max = 2.00; ui_step = 0.01;
+    ui_min = 0.50; ui_max = 3.00; ui_step = 0.01;
     ui_category = "Color Engine";
 > = 1.00;
 
@@ -296,30 +289,30 @@ uniform bool EnableSelectiveColor <
 
 // Per-range values are hue offset (degrees), saturation multiplier and value multiplier.
 // 0 / 1 / 1 are neutral for every range.
-uniform float RedHue < ui_type = "slider"; ui_label = "Red Hue"; ui_min = -45.0; ui_max = 45.0; ui_step = 0.1; ui_category = "Selective Color - Red"; > = 0.0;
-uniform float RedSaturation < ui_type = "slider"; ui_label = "Red Saturation"; ui_min = 0.0; ui_max = 2.0; ui_step = 0.01; ui_category = "Selective Color - Red"; > = 1.0;
-uniform float RedValue < ui_type = "slider"; ui_label = "Red Brightness"; ui_min = 0.0; ui_max = 2.0; ui_step = 0.01; ui_category = "Selective Color - Red"; > = 1.0;
-uniform float OrangeHue < ui_type = "slider"; ui_label = "Orange Hue"; ui_min = -45.0; ui_max = 45.0; ui_step = 0.1; ui_category = "Selective Color - Orange"; > = 0.0;
-uniform float OrangeSaturation < ui_type = "slider"; ui_label = "Orange Saturation"; ui_min = 0.0; ui_max = 2.0; ui_step = 0.01; ui_category = "Selective Color - Orange"; > = 1.0;
-uniform float OrangeValue < ui_type = "slider"; ui_label = "Orange Brightness"; ui_min = 0.0; ui_max = 2.0; ui_step = 0.01; ui_category = "Selective Color - Orange"; > = 1.0;
-uniform float YellowHue < ui_type = "slider"; ui_label = "Yellow Hue"; ui_min = -45.0; ui_max = 45.0; ui_step = 0.1; ui_category = "Selective Color - Yellow"; > = 0.0;
-uniform float YellowSaturation < ui_type = "slider"; ui_label = "Yellow Saturation"; ui_min = 0.0; ui_max = 2.0; ui_step = 0.01; ui_category = "Selective Color - Yellow"; > = 1.0;
-uniform float YellowValue < ui_type = "slider"; ui_label = "Yellow Brightness"; ui_min = 0.0; ui_max = 2.0; ui_step = 0.01; ui_category = "Selective Color - Yellow"; > = 1.0;
-uniform float GreenHue < ui_type = "slider"; ui_label = "Green Hue"; ui_min = -45.0; ui_max = 45.0; ui_step = 0.1; ui_category = "Selective Color - Green"; > = 0.0;
-uniform float GreenSaturation < ui_type = "slider"; ui_label = "Green Saturation"; ui_min = 0.0; ui_max = 2.0; ui_step = 0.01; ui_category = "Selective Color - Green"; > = 1.0;
-uniform float GreenValue < ui_type = "slider"; ui_label = "Green Brightness"; ui_min = 0.0; ui_max = 2.0; ui_step = 0.01; ui_category = "Selective Color - Green"; > = 1.0;
-uniform float CyanHue < ui_type = "slider"; ui_label = "Cyan Hue"; ui_min = -45.0; ui_max = 45.0; ui_step = 0.1; ui_category = "Selective Color - Cyan"; > = 0.0;
-uniform float CyanSaturation < ui_type = "slider"; ui_label = "Cyan Saturation"; ui_min = 0.0; ui_max = 2.0; ui_step = 0.01; ui_category = "Selective Color - Cyan"; > = 1.0;
-uniform float CyanValue < ui_type = "slider"; ui_label = "Cyan Brightness"; ui_min = 0.0; ui_max = 2.0; ui_step = 0.01; ui_category = "Selective Color - Cyan"; > = 1.0;
-uniform float BlueHue < ui_type = "slider"; ui_label = "Blue Hue"; ui_min = -45.0; ui_max = 45.0; ui_step = 0.1; ui_category = "Selective Color - Blue"; > = 0.0;
-uniform float BlueSaturation < ui_type = "slider"; ui_label = "Blue Saturation"; ui_min = 0.0; ui_max = 2.0; ui_step = 0.01; ui_category = "Selective Color - Blue"; > = 1.0;
-uniform float BlueValue < ui_type = "slider"; ui_label = "Blue Brightness"; ui_min = 0.0; ui_max = 2.0; ui_step = 0.01; ui_category = "Selective Color - Blue"; > = 1.0;
-uniform float PurpleHue < ui_type = "slider"; ui_label = "Purple Hue"; ui_min = -45.0; ui_max = 45.0; ui_step = 0.1; ui_category = "Selective Color - Purple"; > = 0.0;
-uniform float PurpleSaturation < ui_type = "slider"; ui_label = "Purple Saturation"; ui_min = 0.0; ui_max = 2.0; ui_step = 0.01; ui_category = "Selective Color - Purple"; > = 1.0;
-uniform float PurpleValue < ui_type = "slider"; ui_label = "Purple Brightness"; ui_min = 0.0; ui_max = 2.0; ui_step = 0.01; ui_category = "Selective Color - Purple"; > = 1.0;
-uniform float MagentaHue < ui_type = "slider"; ui_label = "Magenta Hue"; ui_min = -45.0; ui_max = 45.0; ui_step = 0.1; ui_category = "Selective Color - Magenta"; > = 0.0;
-uniform float MagentaSaturation < ui_type = "slider"; ui_label = "Magenta Saturation"; ui_min = 0.0; ui_max = 2.0; ui_step = 0.01; ui_category = "Selective Color - Magenta"; > = 1.0;
-uniform float MagentaValue < ui_type = "slider"; ui_label = "Magenta Brightness"; ui_min = 0.0; ui_max = 2.0; ui_step = 0.01; ui_category = "Selective Color - Magenta"; > = 1.0;
+uniform float RedHue < ui_type = "slider";ui_label = "Red Hue"; ui_min = -45.0; ui_max = 45.0; ui_step = 0.1; ui_category = "Selective Color - Red"; > = 0.0;
+uniform float RedSaturation < ui_type = "slider";ui_label = "Red Saturation"; ui_min = 0.0; ui_max = 2.0; ui_step = 0.01; ui_category = "Selective Color - Red"; > = 1.0;
+uniform float RedValue < ui_type = "slider";ui_label = "Red Brightness"; ui_min = 0.0; ui_max = 2.0; ui_step = 0.01; ui_category = "Selective Color - Red"; > = 1.0;
+uniform float OrangeHue < ui_type = "slider";ui_label = "Orange Hue"; ui_min = -45.0; ui_max = 45.0; ui_step = 0.1; ui_category = "Selective Color - Orange"; > = 0.0;
+uniform float OrangeSaturation < ui_type = "slider";ui_label = "Orange Saturation"; ui_min = 0.0; ui_max = 2.0; ui_step = 0.01; ui_category = "Selective Color - Orange"; > = 1.0;
+uniform float OrangeValue < ui_type = "slider";ui_label = "Orange Brightness"; ui_min = 0.0; ui_max = 2.0; ui_step = 0.01; ui_category = "Selective Color - Orange"; > = 1.0;
+uniform float YellowHue < ui_type = "slider";ui_label = "Yellow Hue"; ui_min = -45.0; ui_max = 45.0; ui_step = 0.1; ui_category = "Selective Color - Yellow"; > = 0.0;
+uniform float YellowSaturation < ui_type = "slider";ui_label = "Yellow Saturation"; ui_min = 0.0; ui_max = 2.0; ui_step = 0.01; ui_category = "Selective Color - Yellow"; > = 1.0;
+uniform float YellowValue < ui_type = "slider";ui_label = "Yellow Brightness"; ui_min = 0.0; ui_max = 2.0; ui_step = 0.01; ui_category = "Selective Color - Yellow"; > = 1.0;
+uniform float GreenHue < ui_type = "slider";ui_label = "Green Hue"; ui_min = -45.0; ui_max = 45.0; ui_step = 0.1; ui_category = "Selective Color - Green"; > = 0.0;
+uniform float GreenSaturation < ui_type = "slider";ui_label = "Green Saturation"; ui_min = 0.0; ui_max = 2.0; ui_step = 0.01; ui_category = "Selective Color - Green"; > = 1.0;
+uniform float GreenValue < ui_type = "slider";ui_label = "Green Brightness"; ui_min = 0.0; ui_max = 2.0; ui_step = 0.01; ui_category = "Selective Color - Green"; > = 1.0;
+uniform float CyanHue < ui_type = "slider";ui_label = "Cyan Hue"; ui_min = -45.0; ui_max = 45.0; ui_step = 0.1; ui_category = "Selective Color - Cyan"; > = 0.0;
+uniform float CyanSaturation < ui_type = "slider";ui_label = "Cyan Saturation"; ui_min = 0.0; ui_max = 2.0; ui_step = 0.01; ui_category = "Selective Color - Cyan"; > = 1.0;
+uniform float CyanValue < ui_type = "slider";ui_label = "Cyan Brightness"; ui_min = 0.0; ui_max = 2.0; ui_step = 0.01; ui_category = "Selective Color - Cyan"; > = 1.0;
+uniform float BlueHue < ui_type = "slider";ui_label = "Blue Hue"; ui_min = -45.0; ui_max = 45.0; ui_step = 0.1; ui_category = "Selective Color - Blue"; > = 0.0;
+uniform float BlueSaturation < ui_type = "slider";ui_label = "Blue Saturation"; ui_min = 0.0; ui_max = 2.0; ui_step = 0.01; ui_category = "Selective Color - Blue"; > = 1.0;
+uniform float BlueValue < ui_type = "slider";ui_label = "Blue Brightness"; ui_min = 0.0; ui_max = 2.0; ui_step = 0.01; ui_category = "Selective Color - Blue"; > = 1.0;
+uniform float PurpleHue < ui_type = "slider";ui_label = "Purple Hue"; ui_min = -45.0; ui_max = 45.0; ui_step = 0.1; ui_category = "Selective Color - Purple"; > = 0.0;
+uniform float PurpleSaturation < ui_type = "slider";ui_label = "Purple Saturation"; ui_min = 0.0; ui_max = 2.0; ui_step = 0.01; ui_category = "Selective Color - Purple"; > = 1.0;
+uniform float PurpleValue < ui_type = "slider";ui_label = "Purple Brightness"; ui_min = 0.0; ui_max = 2.0; ui_step = 0.01; ui_category = "Selective Color - Purple"; > = 1.0;
+uniform float MagentaHue < ui_type = "slider";ui_label = "Magenta Hue"; ui_min = -45.0; ui_max = 45.0; ui_step = 0.1; ui_category = "Selective Color - Magenta"; > = 0.0;
+uniform float MagentaSaturation < ui_type = "slider";ui_label = "Magenta Saturation"; ui_min = 0.0; ui_max = 2.0; ui_step = 0.01; ui_category = "Selective Color - Magenta"; > = 1.0;
+uniform float MagentaValue < ui_type = "slider";ui_label = "Magenta Brightness"; ui_min = 0.0; ui_max = 2.0; ui_step = 0.01; ui_category = "Selective Color - Magenta"; > = 1.0;
 
 // Color-vision simulation and daltonization-style assistance are separate modes.
 uniform bool EnableColorVision <
@@ -377,7 +370,7 @@ uniform bool EnableSSR <
 uniform float SSRIntensity <
     ui_type = "slider";
     ui_label = "Reflection Intensity";
-    ui_min = 0.0; ui_max = 2.0; ui_step = 0.01;
+    ui_min = 0.0; ui_max = 8.0; ui_step = 0.01;
     ui_category = "Screen-Space Reflections";
 > = 0.65;
 
@@ -446,7 +439,7 @@ uniform bool EnableBloom <
 uniform float BloomRadius <
     ui_type = "slider";
     ui_label = "Bloom Radius";
-    ui_min = 0.10; ui_max = 2.00; ui_step = 0.01;
+    ui_min = 0.01; ui_max = 3.00; ui_step = 0.01;
     ui_category = "Bloom";
 > = 0.35;
 
@@ -586,103 +579,351 @@ uniform int FrameCount < source = "framecount"; >;
 
 // --------------------------- Shared textures -------------------------------
 // Full float luminance pyramid for local contrast.
-texture2D USS110_Luma2  { Width = BUFFER_WIDTH / 2; Height = BUFFER_HEIGHT / 2; Format = RG32F; };
-texture2D USS110_Luma4  { Width = BUFFER_WIDTH / 4; Height = BUFFER_HEIGHT / 4; Format = RG32F; };
-texture2D USS110_Luma8  { Width = BUFFER_WIDTH / 8; Height = BUFFER_HEIGHT / 8; Format = RG32F; };
+texture2D USS110_Luma2
+{
+    Width = BUFFER_WIDTH / 2;
+    Height = BUFFER_HEIGHT / 2;
+    Format = RG32F;
+};
+texture2D USS110_Luma4
+{
+    Width = BUFFER_WIDTH / 4;
+    Height = BUFFER_HEIGHT / 4;
+    Format = RG32F;
+};
+texture2D USS110_Luma8
+{
+    Width = BUFFER_WIDTH / 8;
+    Height = BUFFER_HEIGHT / 8;
+    Format = RG32F;
+};
 
-sampler2D USS110_Luma2S { Texture = USS110_Luma2; AddressU = CLAMP; AddressV = CLAMP; MinFilter = LINEAR; MagFilter = LINEAR; };
-sampler2D USS110_Luma4S { Texture = USS110_Luma4; AddressU = CLAMP; AddressV = CLAMP; MinFilter = LINEAR; MagFilter = LINEAR; };
-sampler2D USS110_Luma8S { Texture = USS110_Luma8; AddressU = CLAMP; AddressV = CLAMP; MinFilter = LINEAR; MagFilter = LINEAR; };
+sampler2D USS110_Luma2S
+{
+    Texture = USS110_Luma2;
+    AddressU = CLAMP;
+    AddressV = CLAMP;
+    MinFilter = LINEAR;
+    MagFilter = LINEAR;
+};
+sampler2D USS110_Luma4S
+{
+    Texture = USS110_Luma4;
+    AddressU = CLAMP;
+    AddressV = CLAMP;
+    MinFilter = LINEAR;
+    MagFilter = LINEAR;
+};
+sampler2D USS110_Luma8S
+{
+    Texture = USS110_Luma8;
+    AddressU = CLAMP;
+    AddressV = CLAMP;
+    MinFilter = LINEAR;
+    MagFilter = LINEAR;
+};
 
 // Full-resolution HUD mask is built once, then reused by all image stages.
 // R16F is sufficient for a feathered 0..1 coverage mask and saves bandwidth.
-texture2D USS110_HUDMaskTexture { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R16F; };
-sampler2D USS110_HUDMaskS { Texture = USS110_HUDMaskTexture; AddressU = CLAMP; AddressV = CLAMP; MinFilter = LINEAR; MagFilter = LINEAR; };
+texture2D USS110_HUDMaskTexture
+{
+    Width = BUFFER_WIDTH;
+    Height = BUFFER_HEIGHT;
+    Format = R16F;
+};
+sampler2D USS110_HUDMaskS
+{
+    Texture = USS110_HUDMaskTexture;
+    AddressU = CLAMP;
+    AddressV = CLAMP;
+    MinFilter = LINEAR;
+    MagFilter = LINEAR;
+};
 
 // Previous original backbuffer frame, used to find screen-locked UI pixels.
 // Pooled=false prevents another effect from aliasing temporal contents.
 texture2D USS110_HUDColorHistory < pooled = false; >
 {
-    Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F;
+    Width = BUFFER_WIDTH;
+    Height = BUFFER_HEIGHT;
+    Format = RGBA16F;
 };
 sampler2D USS110_HUDColorHistoryS
 {
     Texture = USS110_HUDColorHistory;
-    AddressU = CLAMP; AddressV = CLAMP;
-    MinFilter = POINT; MagFilter = POINT; MipFilter = POINT;
+    AddressU = CLAMP;
+    AddressV = CLAMP;
+    MinFilter = POINT;
+    MagFilter = POINT;
+    MipFilter = POINT;
 };
 
 // Shared high-precision colour bloom pyramid.
-texture2D USS110_Bloom2  { Width = BUFFER_WIDTH / 2;  Height = BUFFER_HEIGHT / 2;  Format = RGBA32F; };
-texture2D USS110_Bloom4  { Width = BUFFER_WIDTH / 4;  Height = BUFFER_HEIGHT / 4;  Format = RGBA32F; };
-texture2D USS110_Bloom8  { Width = BUFFER_WIDTH / 8;  Height = BUFFER_HEIGHT / 8;  Format = RGBA32F; };
-texture2D USS110_Bloom16 { Width = BUFFER_WIDTH / 16; Height = BUFFER_HEIGHT / 16; Format = RGBA32F; };
-texture2D USS110_Bloom32 { Width = BUFFER_WIDTH / 32; Height = BUFFER_HEIGHT / 32; Format = RGBA32F; };
+texture2D USS110_Bloom2
+{
+    Width = BUFFER_WIDTH / 2;
+    Height = BUFFER_HEIGHT / 2;
+    Format = RGBA32F;
+};
+texture2D USS110_Bloom4
+{
+    Width = BUFFER_WIDTH / 4;
+    Height = BUFFER_HEIGHT / 4;
+    Format = RGBA32F;
+};
+texture2D USS110_Bloom8
+{
+    Width = BUFFER_WIDTH / 8;
+    Height = BUFFER_HEIGHT / 8;
+    Format = RGBA32F;
+};
+texture2D USS110_Bloom16
+{
+    Width = BUFFER_WIDTH / 16;
+    Height = BUFFER_HEIGHT / 16;
+    Format = RGBA32F;
+};
+texture2D USS110_Bloom32
+{
+    Width = BUFFER_WIDTH / 32;
+    Height = BUFFER_HEIGHT / 32;
+    Format = RGBA32F;
+};
 
-sampler2D USS110_Bloom2S  { Texture = USS110_Bloom2;  MinFilter = LINEAR; MagFilter = LINEAR; };
-sampler2D USS110_Bloom4S  { Texture = USS110_Bloom4;  MinFilter = LINEAR; MagFilter = LINEAR; };
-sampler2D USS110_Bloom8S  { Texture = USS110_Bloom8;  MinFilter = LINEAR; MagFilter = LINEAR; };
-sampler2D USS110_Bloom16S { Texture = USS110_Bloom16; AddressU = CLAMP; AddressV = CLAMP; MinFilter = LINEAR; MagFilter = LINEAR; };
-sampler2D USS110_Bloom32S { Texture = USS110_Bloom32; AddressU = CLAMP; AddressV = CLAMP; MinFilter = LINEAR; MagFilter = LINEAR; };
+sampler2D USS110_Bloom2S
+{
+    Texture = USS110_Bloom2;
+    MinFilter = LINEAR;
+    MagFilter = LINEAR;
+};
+sampler2D USS110_Bloom4S
+{
+    Texture = USS110_Bloom4;
+    MinFilter = LINEAR;
+    MagFilter = LINEAR;
+};
+sampler2D USS110_Bloom8S
+{
+    Texture = USS110_Bloom8;
+    MinFilter = LINEAR;
+    MagFilter = LINEAR;
+};
+sampler2D USS110_Bloom16S
+{
+    Texture = USS110_Bloom16;
+    AddressU = CLAMP;
+    AddressV = CLAMP;
+    MinFilter = LINEAR;
+    MagFilter = LINEAR;
+};
+sampler2D USS110_Bloom32S
+{
+    Texture = USS110_Bloom32;
+    AddressU = CLAMP;
+    AddressV = CLAMP;
+    MinFilter = LINEAR;
+    MagFilter = LINEAR;
+};
 
 // AO working buffers. Float32 reduces precision loss in depth comparisons.
-texture2D USS110_AOCurrent  { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R32F; };
-texture2D USS110_AOResolved { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R32F; };
+texture2D USS110_AOCurrent
+{
+    Width = BUFFER_WIDTH;
+    Height = BUFFER_HEIGHT;
+    Format = R32F;
+};
+texture2D USS110_AOResolved
+{
+    Width = BUFFER_WIDTH;
+    Height = BUFFER_HEIGHT;
+    Format = R32F;
+};
 
 // Persistent history must not be pooled/reused by unrelated render targets.
 texture2D USS110_AOHistory < pooled = false; >
 {
-    Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R32F;
+    Width = BUFFER_WIDTH;
+    Height = BUFFER_HEIGHT;
+    Format = R32F;
 };
 texture2D USS110_DepthHistory < pooled = false; >
 {
-    Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = R32F;
+    Width = BUFFER_WIDTH;
+    Height = BUFFER_HEIGHT;
+    Format = R32F;
 };
 
-sampler2D USS110_AOCurrentS { Texture = USS110_AOCurrent; AddressU = CLAMP; AddressV = CLAMP; MinFilter = POINT; MagFilter = POINT; };
-sampler2D USS110_AOResolvedS { Texture = USS110_AOResolved; AddressU = CLAMP; AddressV = CLAMP; MinFilter = LINEAR; MagFilter = LINEAR; };
-sampler2D USS110_AOHistoryS { Texture = USS110_AOHistory; AddressU = CLAMP; AddressV = CLAMP; MinFilter = POINT; MagFilter = POINT; };
-sampler2D USS110_DepthHistoryS { Texture = USS110_DepthHistory; AddressU = CLAMP; AddressV = CLAMP; MinFilter = POINT; MagFilter = POINT; };
+sampler2D USS110_AOCurrentS
+{
+    Texture = USS110_AOCurrent;
+    AddressU = CLAMP;
+    AddressV = CLAMP;
+    MinFilter = POINT;
+    MagFilter = POINT;
+};
+sampler2D USS110_AOResolvedS
+{
+    Texture = USS110_AOResolved;
+    AddressU = CLAMP;
+    AddressV = CLAMP;
+    MinFilter = LINEAR;
+    MagFilter = LINEAR;
+};
+sampler2D USS110_AOHistoryS
+{
+    Texture = USS110_AOHistory;
+    AddressU = CLAMP;
+    AddressV = CLAMP;
+    MinFilter = POINT;
+    MagFilter = POINT;
+};
+sampler2D USS110_DepthHistoryS
+{
+    Texture = USS110_DepthHistory;
+    AddressU = CLAMP;
+    AddressV = CLAMP;
+    MinFilter = POINT;
+    MagFilter = POINT;
+};
 
 // 256x256 luminance image; the exposure pass explicitly regenerates mipmaps.
 texture2D USS110_ExposureLuma
 {
-    Width = 256; Height = 256; Format = RG32F; MipLevels = 9;
+    Width = 256;
+    Height = 256;
+    Format = RG32F;
+    MipLevels = 9;
 };
-sampler2D USS110_ExposureLumaS { Texture = USS110_ExposureLuma; AddressU = CLAMP; AddressV = CLAMP; MinFilter = LINEAR; MagFilter = LINEAR; MipFilter = LINEAR; };
+sampler2D USS110_ExposureLumaS
+{
+    Texture = USS110_ExposureLuma;
+    AddressU = CLAMP;
+    AddressV = CLAMP;
+    MinFilter = LINEAR;
+    MagFilter = LINEAR;
+    MipFilter = LINEAR;
+};
 
-texture2D USS110_ExposureCurrent { Width = 1; Height = 1; Format = R32F; };
+texture2D USS110_ExposureCurrent
+{
+    Width = 1;
+    Height = 1;
+    Format = R32F;
+};
 texture2D USS110_ExposureHistory < pooled = false; >
 {
-    Width = 1; Height = 1; Format = R32F;
+    Width = 1;
+    Height = 1;
+    Format = R32F;
 };
-sampler2D USS110_ExposureCurrentS { Texture = USS110_ExposureCurrent; AddressU = CLAMP; AddressV = CLAMP; MinFilter = POINT; MagFilter = POINT; };
-sampler2D USS110_ExposureHistoryS { Texture = USS110_ExposureHistory; AddressU = CLAMP; AddressV = CLAMP; MinFilter = POINT; MagFilter = POINT; };
+sampler2D USS110_ExposureCurrentS
+{
+    Texture = USS110_ExposureCurrent;
+    AddressU = CLAMP;
+    AddressV = CLAMP;
+    MinFilter = POINT;
+    MagFilter = POINT;
+};
+sampler2D USS110_ExposureHistoryS
+{
+    Texture = USS110_ExposureHistory;
+    AddressU = CLAMP;
+    AddressV = CLAMP;
+    MinFilter = POINT;
+    MagFilter = POINT;
+};
 
 // Source copy and USS X buffers. RGBA16F is more precise than the usual
 // 8-bit display target while keeping 4K history memory use manageable.
-texture2D USS110_XSource { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
-texture2D USS110_XCurrent { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
-texture2D USS110_XTemporal { Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F; };
+texture2D USS110_XSource
+{
+    Width = BUFFER_WIDTH;
+    Height = BUFFER_HEIGHT;
+    Format = RGBA16F;
+};
+texture2D USS110_XCurrent
+{
+    Width = BUFFER_WIDTH;
+    Height = BUFFER_HEIGHT;
+    Format = RGBA16F;
+};
+texture2D USS110_XTemporal
+{
+    Width = BUFFER_WIDTH;
+    Height = BUFFER_HEIGHT;
+    Format = RGBA16F;
+};
 
 
 // T-1/T-2 histories persist between frames and must not be pooled.
 // History alpha is stored as coverage + 2.0, reserving values below 1.5 as invalid.
 texture2D USS110_XHistory1 < pooled = false; >
 {
-    Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F;
+    Width = BUFFER_WIDTH;
+    Height = BUFFER_HEIGHT;
+    Format = RGBA16F;
 };
 texture2D USS110_XHistory2 < pooled = false; >
 {
-    Width = BUFFER_WIDTH; Height = BUFFER_HEIGHT; Format = RGBA16F;
+    Width = BUFFER_WIDTH;
+    Height = BUFFER_HEIGHT;
+    Format = RGBA16F;
 };
 
-sampler2D USS110_XSourcePointS { Texture = USS110_XSource; AddressU = CLAMP; AddressV = CLAMP; MinFilter = POINT; MagFilter = POINT; MipFilter = POINT; };
-sampler2D USS110_XSourceLinearS { Texture = USS110_XSource; AddressU = CLAMP; AddressV = CLAMP; MinFilter = LINEAR; MagFilter = LINEAR; MipFilter = POINT; };
-sampler2D USS110_XCurrentS { Texture = USS110_XCurrent; AddressU = CLAMP; AddressV = CLAMP; MinFilter = POINT; MagFilter = POINT; MipFilter = POINT; };
-sampler2D USS110_XTemporalS { Texture = USS110_XTemporal; AddressU = CLAMP; AddressV = CLAMP; MinFilter = POINT; MagFilter = POINT; MipFilter = POINT; };
-sampler2D USS110_XHistory1S { Texture = USS110_XHistory1; AddressU = CLAMP; AddressV = CLAMP; MinFilter = POINT; MagFilter = POINT; MipFilter = POINT; };
-sampler2D USS110_XHistory2S { Texture = USS110_XHistory2; AddressU = CLAMP; AddressV = CLAMP; MinFilter = POINT; MagFilter = POINT; MipFilter = POINT; };
+sampler2D USS110_XSourcePointS
+{
+    Texture = USS110_XSource;
+    AddressU = CLAMP;
+    AddressV = CLAMP;
+    MinFilter = POINT;
+    MagFilter = POINT;
+    MipFilter = POINT;
+};
+sampler2D USS110_XSourceLinearS
+{
+    Texture = USS110_XSource;
+    AddressU = CLAMP;
+    AddressV = CLAMP;
+    MinFilter = LINEAR;
+    MagFilter = LINEAR;
+    MipFilter = POINT;
+};
+sampler2D USS110_XCurrentS
+{
+    Texture = USS110_XCurrent;
+    AddressU = CLAMP;
+    AddressV = CLAMP;
+    MinFilter = POINT;
+    MagFilter = POINT;
+    MipFilter = POINT;
+};
+sampler2D USS110_XTemporalS
+{
+    Texture = USS110_XTemporal;
+    AddressU = CLAMP;
+    AddressV = CLAMP;
+    MinFilter = POINT;
+    MagFilter = POINT;
+    MipFilter = POINT;
+};
+sampler2D USS110_XHistory1S
+{
+    Texture = USS110_XHistory1;
+    AddressU = CLAMP;
+    AddressV = CLAMP;
+    MinFilter = POINT;
+    MagFilter = POINT;
+    MipFilter = POINT;
+};
+sampler2D USS110_XHistory2S
+{
+    Texture = USS110_XHistory2;
+    AddressU = CLAMP;
+    AddressV = CLAMP;
+    MinFilter = POINT;
+    MagFilter = POINT;
+    MipFilter = POINT;
+};
 
 
 // Half-resolution reflection buffer: depth is still sampled at native resolution.
@@ -696,8 +937,11 @@ texture2D USS110_SSRReflection
 sampler2D USS110_SSRReflectionS
 {
     Texture = USS110_SSRReflection;
-    AddressU = CLAMP; AddressV = CLAMP;
-    MinFilter = LINEAR; MagFilter = LINEAR; MipFilter = POINT;
+    AddressU = CLAMP;
+    AddressV = CLAMP;
+    MinFilter = LINEAR;
+    MagFilter = LINEAR;
+    MipFilter = POINT;
 };
 
 // --------------------------- HUD preservation ------------------------------
@@ -733,9 +977,9 @@ float USS_HUDMaskShape(float2 uv)
 
             float2 px = ReShade::PixelSize;
             float centerLuma = USS_HUDLuma(currentColor);
-            float l1 = USS_HUDLuma(tex2D(ReShade::BackBuffer, saturate(uv + float2( px.x, 0))).rgb);
+            float l1 = USS_HUDLuma(tex2D(ReShade::BackBuffer, saturate(uv + float2(px.x, 0))).rgb);
             float l2 = USS_HUDLuma(tex2D(ReShade::BackBuffer, saturate(uv + float2(-px.x, 0))).rgb);
-            float l3 = USS_HUDLuma(tex2D(ReShade::BackBuffer, saturate(uv + float2(0,  px.y))).rgb);
+            float l3 = USS_HUDLuma(tex2D(ReShade::BackBuffer, saturate(uv + float2(0, px.y))).rgb);
             float l4 = USS_HUDLuma(tex2D(ReShade::BackBuffer, saturate(uv + float2(0, -px.y))).rgb);
             float l5 = USS_HUDLuma(tex2D(ReShade::BackBuffer, saturate(uv + float2(2.0 * px.x, 0))).rgb);
             float l6 = USS_HUDLuma(tex2D(ReShade::BackBuffer, saturate(uv + float2(-2.0 * px.x, 0))).rgb);
@@ -850,9 +1094,9 @@ float2 USS_LumaDown4(sampler2D src, float2 uv, float2 srcPixel)
 {
     float2 d = srcPixel * 0.5;
     float2 a = tex2D(src, uv + float2(-d.x, -d.y)).rg;
-    float2 b = tex2D(src, uv + float2( d.x, -d.y)).rg;
-    float2 c = tex2D(src, uv + float2(-d.x,  d.y)).rg;
-    float2 e = tex2D(src, uv + float2( d.x,  d.y)).rg;
+    float2 b = tex2D(src, uv + float2(d.x, -d.y)).rg;
+    float2 c = tex2D(src, uv + float2(-d.x, d.y)).rg;
+    float2 e = tex2D(src, uv + float2(d.x, d.y)).rg;
 
     // Each RG value stores (mean-luma numerator, unmasked coverage).
     // Averaging both channels independently preserves the weighted ratio
@@ -865,15 +1109,15 @@ float3 USS_BlurDown17(sampler2D src, float2 uv, float2 srcPixel)
 {
     float2 d = srcPixel * BloomSpread * BloomRadius;
     float3 c = tex2D(src, uv).rgb * 0.20;
-    c += (tex2D(src, uv + float2( d.x, 0)).rgb + tex2D(src, uv + float2(-d.x, 0)).rgb
-        + tex2D(src, uv + float2(0, d.y)).rgb + tex2D(src, uv + float2(0,-d.y)).rgb) * 0.10;
-    c += (tex2D(src, uv + float2( d.x, d.y)).rgb + tex2D(src, uv + float2(-d.x, d.y)).rgb
-        + tex2D(src, uv + float2( d.x,-d.y)).rgb + tex2D(src, uv + float2(-d.x,-d.y)).rgb) * 0.05;
+    c += (tex2D(src, uv + float2(d.x, 0)).rgb + tex2D(src, uv + float2(-d.x, 0)).rgb
+        + tex2D(src, uv + float2(0, d.y)).rgb + tex2D(src, uv + float2(0, -d.y)).rgb) * 0.10;
+    c += (tex2D(src, uv + float2(d.x, d.y)).rgb + tex2D(src, uv + float2(-d.x, d.y)).rgb
+        + tex2D(src, uv + float2(d.x, -d.y)).rgb + tex2D(src, uv + float2(-d.x, -d.y)).rgb) * 0.05;
     float2 q = d * 2.0;
-    c += (tex2D(src, uv + float2( q.x, 0)).rgb + tex2D(src, uv + float2(-q.x, 0)).rgb
-        + tex2D(src, uv + float2(0, q.y)).rgb + tex2D(src, uv + float2(0,-q.y)).rgb) * 0.025;
-    c += (tex2D(src, uv + float2( q.x, q.y)).rgb + tex2D(src, uv + float2(-q.x, q.y)).rgb
-        + tex2D(src, uv + float2( q.x,-q.y)).rgb + tex2D(src, uv + float2(-q.x,-q.y)).rgb) * 0.025;
+    c += (tex2D(src, uv + float2(q.x, 0)).rgb + tex2D(src, uv + float2(-q.x, 0)).rgb
+        + tex2D(src, uv + float2(0, q.y)).rgb + tex2D(src, uv + float2(0, -q.y)).rgb) * 0.025;
+    c += (tex2D(src, uv + float2(q.x, q.y)).rgb + tex2D(src, uv + float2(-q.x, q.y)).rgb
+        + tex2D(src, uv + float2(q.x, -q.y)).rgb + tex2D(src, uv + float2(-q.x, -q.y)).rgb) * 0.025;
     return c;
 }
 
@@ -896,9 +1140,9 @@ float3 USS_BrightExtract(float3 c)
 float3 USS_BloomExtractDownsample(float2 uv, float2 d)
 {
     float2 uv0 = saturate(uv + float2(-d.x, -d.y));
-    float2 uv1 = saturate(uv + float2( d.x, -d.y));
-    float2 uv2 = saturate(uv + float2(-d.x,  d.y));
-    float2 uv3 = saturate(uv + float2( d.x,  d.y));
+    float2 uv1 = saturate(uv + float2(d.x, -d.y));
+    float2 uv2 = saturate(uv + float2(-d.x, d.y));
+    float2 uv3 = saturate(uv + float2(d.x, d.y));
 
     float3 c0 = USS_BrightExtract(USS_SceneColorLinear(uv0));
     float3 c1 = USS_BrightExtract(USS_SceneColorLinear(uv1));
@@ -952,7 +1196,7 @@ float4 PS_USS_SSRTrace(float4 pos : SV_Position, float2 uv : TEXCOORD) : SV_Targ
     float depthU = ReShade::GetLinearizedDepth(uvU);
     float depthD = ReShade::GetLinearizedDepth(uvD);
 
-    float3 P  = USS_SSRViewPosition(uv, depth);
+    float3 P = USS_SSRViewPosition(uv, depth);
     float3 PL = USS_SSRViewPosition(uvL, depthL);
     float3 PR = USS_SSRViewPosition(uvR, depthR);
     float3 PU = USS_SSRViewPosition(uvU, depthU);
@@ -989,19 +1233,20 @@ float4 PS_USS_SSRTrace(float4 pos : SV_Position, float2 uv : TEXCOORD) : SV_Targ
     float hitDistance = SSRMaxDistance;
     float2 hitUV = uv;
     float3 hitColor = 0.0;
-    float stepLength = SSRMaxDistance / (float)raySteps;
+    float stepLength = SSRMaxDistance / (float) raySteps;
     float startOffset = max(SSRThickness * 0.20, 0.08);
     float previousDelta = -1e20;
     float previousDistance = startOffset;
     float previousValid = 0.0;
     float tanHalfFov = tan(SSRFieldOfView * 0.00872664626);
 
-    [loop] for (int stepIndex = 1; stepIndex <= 40; ++stepIndex)
+    [loop]
+    for (int stepIndex = 1; stepIndex <= 40; ++stepIndex)
     {
         if (stepIndex > raySteps)
             break;
 
-        float distanceAlongRay = startOffset + stepLength * (float)stepIndex;
+        float distanceAlongRay = startOffset + stepLength * (float) stepIndex;
         float3 rayPosition = P + reflectedDirection * distanceAlongRay;
         if (rayPosition.z <= 0.1)
             break;
@@ -1037,7 +1282,8 @@ float4 PS_USS_SSRTrace(float4 pos : SV_Position, float2 uv : TEXCOORD) : SV_Targ
             float2 refinedUV = rayUV;
             float refinedDelta = depthDelta;
 
-            [loop] for (int refine = 0; refine < 4; ++refine)
+            [loop]
+            for (int refine = 0; refine < 4; ++refine)
             {
                 float mid = 0.5 * (lo + hi);
                 float3 midPosition = P + reflectedDirection * mid;
@@ -1124,9 +1370,9 @@ float4 PS_USS_Luma2(float4 pos : SV_Position, float2 uv : TEXCOORD) : SV_Target
         return float4(0.0, 1.0, 0.0, 1.0);
     float2 d = ReShade::PixelSize * 0.5;
     float2 uv0 = saturate(uv + float2(-d.x, -d.y));
-    float2 uv1 = saturate(uv + float2( d.x, -d.y));
-    float2 uv2 = saturate(uv + float2(-d.x,  d.y));
-    float2 uv3 = saturate(uv + float2( d.x,  d.y));
+    float2 uv1 = saturate(uv + float2(d.x, -d.y));
+    float2 uv2 = saturate(uv + float2(-d.x, d.y));
+    float2 uv3 = saturate(uv + float2(d.x, d.y));
 
     float3 a = USS_SceneColorLinear(uv0);
     float3 b = USS_SceneColorLinear(uv1);
@@ -1219,7 +1465,8 @@ float4 PS_USS_AO(float4 pos : SV_Position, float2 uv : TEXCOORD) : SV_Target
     // explicitly instead of nesting an unrolled loop inside 32 directions.
     // This avoids the FXC X3511 expansion failure while retaining exactly
     // 32 x 3 = 96 depth samples per pixel.
-    [loop] for (int i = 0; i < 32; ++i)
+    [loop]
+    for (int i = 0; i < 32; ++i)
     {
         float angle = (i + 0.5) * (TAU / 32.0) + rotation;
         float2 dir = float2(cos(angle), sin(angle));
@@ -1259,9 +1506,11 @@ float USS_AOSpatialFilter(float2 uv, float centerDepth)
     float weightSum = 0.0;
     float2 px = ReShade::PixelSize;
 
-    [loop] for (int y = -1; y <= 1; ++y)
+    [loop]
+    for (int y = -1; y <= 1; ++y)
     {
-        [loop] for (int x = -1; x <= 1; ++x)
+        [loop]
+        for (int x = -1; x <= 1; ++x)
         {
             float2 sampleUV = saturate(uv + float2(x, y) * px);
             float sampleDepth = ReShade::GetLinearizedDepth(sampleUV);
@@ -1443,16 +1692,16 @@ float3 USS_ApplyColorVision(float3 color)
 
     const float3x3 protan = float3x3(
          0.152286, 1.052583, -0.204868,
-         0.114503, 0.786281,  0.099216,
-        -0.003882,-0.048116,  1.051998);
+         0.114503, 0.786281, 0.099216,
+        -0.003882, -0.048116, 1.051998);
     const float3x3 deutan = float3x3(
          0.367322, 0.860646, -0.227968,
-         0.280085, 0.672501,  0.047413,
-        -0.011820, 0.042940,  0.968881);
+         0.280085, 0.672501, 0.047413,
+        -0.011820, 0.042940, 0.968881);
     const float3x3 tritan = float3x3(
          1.255528, -0.076749, -0.178779,
-        -0.078411,  0.930809,  0.147602,
-         0.004733,  0.691367,  0.303900);
+        -0.078411, 0.930809, 0.147602,
+         0.004733, 0.691367, 0.303900);
 
     float3 simulated = color;
     int mode = ColorVisionMode;
@@ -1503,7 +1752,7 @@ float3 USS_ApplyEyeProtection(float3 color)
 
 // -------------------------- Final reconstruction --------------------------
 
-float4 PS_USS_NeuralFusion(float4 pos : SV_Position, float2 uv : TEXCOORD) : SV_Target
+float4 PS_USS_VisualFusion(float4 pos : SV_Position, float2 uv : TEXCOORD) : SV_Target
 {
     if (EnableUSSX && USSX_DebugView != 0)
         return float4(tex2D(USS110_XTemporalS, uv).rgb, 1.0);
@@ -1514,14 +1763,14 @@ float4 PS_USS_NeuralFusion(float4 pos : SV_Position, float2 uv : TEXCOORD) : SV_
     float3 C = USS_SceneColorLinear(uv);
 
     // Cardinal and diagonal taps for frequency separation and edge analysis.
-    float3 L  = USS_SceneSample(uv + float2(-d.x, 0), C);
-    float3 R  = USS_SceneSample(uv + float2( d.x, 0), C);
-    float3 U  = USS_SceneSample(uv + float2(0, -d.y), C);
-    float3 D  = USS_SceneSample(uv + float2(0,  d.y), C);
+    float3 L = USS_SceneSample(uv + float2(-d.x, 0), C);
+    float3 R = USS_SceneSample(uv + float2(d.x, 0), C);
+    float3 U = USS_SceneSample(uv + float2(0, -d.y), C);
+    float3 D = USS_SceneSample(uv + float2(0, d.y), C);
     float3 NW = USS_SceneSample(uv + float2(-d.x, -d.y), C);
-    float3 NE = USS_SceneSample(uv + float2( d.x, -d.y), C);
-    float3 SW = USS_SceneSample(uv + float2(-d.x,  d.y), C);
-    float3 SE = USS_SceneSample(uv + float2( d.x,  d.y), C);
+    float3 NE = USS_SceneSample(uv + float2(d.x, -d.y), C);
+    float3 SW = USS_SceneSample(uv + float2(-d.x, d.y), C);
+    float3 SE = USS_SceneSample(uv + float2(d.x, d.y), C);
 
     float lum = USS_Luma(C);
     float gx = USS_Luma(R) - USS_Luma(L);
@@ -1694,7 +1943,7 @@ float4 PS_USS_NeuralFusion(float4 pos : SV_Position, float2 uv : TEXCOORD) : SV_
     if (EnableFilmGrain && FilmGrainAmount > 0.0)
     {
         float2 grainCoord = floor(pos.xy / max(FilmGrainSize, 0.5));
-        float frameSeed = (float)FrameCount;
+        float frameSeed = (float) FrameCount;
         float noise = USS_Hash12(grainCoord + float2(frameSeed * 17.13, frameSeed * 31.71)) - 0.5;
         float grainLuma = USS_Luma(displayColor);
         float shadowBias = lerp(1.25, 0.70, saturate(grainLuma));
@@ -1834,12 +2083,13 @@ float4 USSX_EstimateCoverage(
     // A single 16-iteration loop replaces nested forced-unroll loops.
     // Explicit-LOD texture reads in USSX_SampleLinear prevent FXC from
     // converting this loop back into a large implicit-gradient expansion.
-    [loop] for (int sampleIndex = 0; sampleIndex < 16; ++sampleIndex)
+    [loop]
+    for (int sampleIndex = 0; sampleIndex < 16; ++sampleIndex)
     {
         int sx = sampleIndex & 3;
         int sy = sampleIndex >> 2;
-        float2 subpixelOffset = float2(((float)sx + 0.5) * 0.25 - 0.5,
-                                       ((float)sy + 0.5) * 0.25 - 0.5);
+        float2 subpixelOffset = float2(((float) sx + 0.5) * 0.25 - 0.5,
+                                       ((float) sy + 0.5) * 0.25 - 0.5);
         float2 sampleUV = uv + subpixelOffset * pixel;
         float3 sampleColor = USSX_SampleLinear(sampleUV, centerColor);
 
@@ -2023,37 +2273,45 @@ float4 PS_USSX_TemporalResolve(float4 position : SV_Position,
         float refineStep2 = max(coarseStep / 9.0, 0.50);
         float refineStep3 = max(coarseStep / 27.0, 0.25);
 
-        [loop] for (int y = -1; y <= 1; ++y)
+        [loop]
+        for (int y = -1; y <= 1; ++y)
         {
-            [loop] for (int x = -1; x <= 1; ++x)
-                USSX_ConsiderHistory(uv, float2((float)x, (float)y) * pixel * coarseStep,
+            [loop]
+            for (int x = -1; x <= 1; ++x)
+                USSX_ConsiderHistory(uv, float2((float) x, (float) y) * pixel * coarseStep,
                     current.rgb, current.a, bestError, bestHistoryRGB,
                     bestHistoryCoverage, bestOffset, historyFound);
         }
 
         float2 stageCenter = bestOffset;
-        [loop] for (int y = -1; y <= 1; ++y)
+        [loop]
+        for (int y = -1; y <= 1; ++y)
         {
-            [loop] for (int x = -1; x <= 1; ++x)
-                USSX_ConsiderHistory(uv, stageCenter + float2((float)x, (float)y) * pixel * refineStep1,
+            [loop]
+            for (int x = -1; x <= 1; ++x)
+                USSX_ConsiderHistory(uv, stageCenter + float2((float) x, (float) y) * pixel * refineStep1,
                     current.rgb, current.a, bestError, bestHistoryRGB,
                     bestHistoryCoverage, bestOffset, historyFound);
         }
 
         stageCenter = bestOffset;
-        [loop] for (int y = -1; y <= 1; ++y)
+        [loop]
+        for (int y = -1; y <= 1; ++y)
         {
-            [loop] for (int x = -1; x <= 1; ++x)
-                USSX_ConsiderHistory(uv, stageCenter + float2((float)x, (float)y) * pixel * refineStep2,
+            [loop]
+            for (int x = -1; x <= 1; ++x)
+                USSX_ConsiderHistory(uv, stageCenter + float2((float) x, (float) y) * pixel * refineStep2,
                     current.rgb, current.a, bestError, bestHistoryRGB,
                     bestHistoryCoverage, bestOffset, historyFound);
         }
 
         stageCenter = bestOffset;
-        [loop] for (int y = -1; y <= 1; ++y)
+        [loop]
+        for (int y = -1; y <= 1; ++y)
         {
-            [loop] for (int x = -1; x <= 1; ++x)
-                USSX_ConsiderHistory(uv, stageCenter + float2((float)x, (float)y) * pixel * refineStep3,
+            [loop]
+            for (int x = -1; x <= 1; ++x)
+                USSX_ConsiderHistory(uv, stageCenter + float2((float) x, (float) y) * pixel * refineStep3,
                     current.rgb, current.a, bestError, bestHistoryRGB,
                     bestHistoryCoverage, bestOffset, historyFound);
         }
@@ -2094,7 +2352,7 @@ float4 PS_USSX_SaveHistory(float4 position : SV_Position,
 
 // -------------------------------- Technique ---------------------------------
 
-technique USS_NeuralFusion_1_10
+technique USS_VisualFusion_1_10
 {
     // Build the automatic HUD mask first; all following stages consume this mask.
     pass HUD_Mask_Build
@@ -2213,11 +2471,11 @@ technique USS_NeuralFusion_1_10
         RenderTarget = USS110_ExposureCurrent;
     }
 
-    // Neural Fusion is the final image pass and restores protected HUD pixels from the original BackBuffer.
-    pass Neural_Fusion
+    // Visual Fusion is the final image pass and restores protected HUD pixels from the original BackBuffer.
+    pass Visual_Fusion
     {
         VertexShader = PostProcessVS;
-        PixelShader = PS_USS_NeuralFusion;
+        PixelShader = PS_USS_VisualFusion;
     }
 
     // Preserve previous USS X frames for T-2 search; these passes do not touch the displayed BackBuffer.
