@@ -1,4 +1,4 @@
-# ✨ USS-VisualEngine 1.10
+# ✨ USS-VisualEngine
 ### Universal Screen-Space Visual Engine
 **One shader. A complete visual enhancement suite.**
 
